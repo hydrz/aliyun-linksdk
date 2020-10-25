@@ -1,0 +1,81 @@
+# Copyright (c) 2020 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/lite/config/component/lite_component.gni")
+import("//build/lite/ndk/ndk.gni")
+
+config("linksdk_config") {
+    cflags = [ 
+        "-Wno-sign-compare", 
+        "-Wno-unused-parameter",
+        "-Wno-implicit-function-declaration",
+    ]
+
+    include_dirs = [
+        "core",
+        "core/sysdep",
+        "core/utils",
+        "//utils/native/lite/include",
+        "$ohos_third_party_dir/mbedtls/include",
+        "$ohos_third_party_dir/lwip_sack/include",
+    ]
+}
+
+linksdk_sources = [
+    "core/sysdep/core_sysdep.c",
+    "core/utils/core_auth.c",
+    "core/utils/core_diag.c",
+    "core/utils/core_global.c",
+    "core/utils/core_http.c",
+    "core/utils/core_log.c",
+    "core/utils/core_sha256.c",
+    "core/utils/core_string.c",
+    "core/aiot_mqtt_api.c",
+    "core/aiot_state_api.c",
+    "external/ali_ca_cert.c",
+    "portfiles/aiot_port/hi3861_port.c",
+]
+
+if (board_name != "hi3861v100") {
+    shared_library("linksdk_shared") {
+        sources = linksdk_sources
+        output_name = "linksdk"
+        public_configs = [
+            ":linksdk_config",
+        ]
+    }
+}
+
+static_library("linksdk_static") {
+    sources = linksdk_sources
+    output_name = "linksdk"
+    public_configs = [
+        ":linksdk_config",
+    ]
+}
+
+ndk_lib("linksdk_ndk") {
+    if (board_name != "hi3861v100") {
+        lib_extension = ".so"
+        deps = [
+            ":linksdk_shared"
+        ]
+    } else {
+        deps = [
+            ":linksdk_static"
+        ]
+    }
+    head_files = [
+        "//third_party/LinkSDK"
+    ]
+}
